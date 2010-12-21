@@ -2,6 +2,36 @@
 
 Adds support for limit and offset for Sybase ASE DB to activerecord-jdbc-adapter for Arel 2.
 
+To activate this gem the "dialect" should be set to "sybase_jtds" as follows:
+
+    development:
+      adapter: jdbc
+      username: user_name
+      password: password
+      database: mobetl
+      dialect: sybase_jtds
+      driver: net.sourceforge.jtds.jdbc.Driver
+      url: jdbc:jtds:sybase://host:port/db_name
+
+== Known issues
+
+Very strange issue is when the very first query uses "limit()", this driver does not work:
+
+    $ rails c
+    Loading development environment (Rails 3.0.3)
+    irb(main):001:0> Client.limit(10).to_sql
+    => "SELECT clients.* FROM clients LIMIT 10"
+
+Otherwise the driver works fine, adding the "TOP" keyword to sql query
+
+    $ rails c
+    Loading development environment (Rails 3.0.3)
+    irb(main):001:0> Client.scoped.to_sql
+    => "SELECT clients.* FROM clients"
+    irb(main):002:0> Client.limit(10).to_sql
+    => "SELECT TOP 10 clients.* FROM clients"
+
+
 == Contributing to ar-sybase-jdbc-adapter
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
