@@ -10,6 +10,14 @@ module Arel
 
 
       describe Nodes::SelectStatement do
+        it "should not have 'LIMIT' keyword" do
+          stmt = Nodes::SelectStatement.new
+          stmt.cores.first.projections << 'first_field'
+          stmt.limit = 10
+          sql = @visitor.accept stmt
+          sql.wont_match /LIMIT 10/
+        end
+
         describe 'limit with no offset and no "DISTINCT"' do
           it 'adds a TOP keyword after "SELECT"' do
             stmt = Nodes::SelectStatement.new
