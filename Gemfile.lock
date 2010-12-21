@@ -1,30 +1,43 @@
 GEM
   remote: http://rubygems.org/
   specs:
+    activemodel (3.0.3)
+      activesupport (= 3.0.3)
+      builder (~> 2.1.2)
+      i18n (~> 0.4)
+    activerecord (3.0.3)
+      activemodel (= 3.0.3)
+      activesupport (= 3.0.3)
+      arel (~> 2.0.2)
+      tzinfo (~> 0.3.23)
+    activerecord-jdbc-adapter (1.1.0)
+    activesupport (3.0.3)
     arel (2.0.6)
-    columnize (0.3.2)
+    builder (2.1.2)
     git (1.2.5)
-    jeweler (1.5.1)
+    i18n (0.5.0)
+    jdbc-jtds (1.2.5)
+    jdbc-jtds (1.2.5-java)
+    jeweler (1.5.2)
       bundler (~> 1.0.0)
       git (>= 1.2.5)
       rake
-    linecache (0.43)
     minitest (2.0.1)
     rake (0.8.7)
     rcov (0.9.9)
-    ruby-debug (0.10.4)
-      columnize (>= 0.1)
-      ruby-debug-base (~> 0.10.4.0)
-    ruby-debug-base (0.10.4)
-      linecache (>= 0.3)
+    rcov (0.9.9-java)
+    tzinfo (0.3.23)
 
 PLATFORMS
+  java
   ruby
 
 DEPENDENCIES
+  activerecord (>= 3.0.3)
+  activerecord-jdbc-adapter (>= 1.1.0)
   arel (> 2.0.0)
   bundler (~> 1.0.0)
+  jdbc-jtds
   jeweler (~> 1.5.1)
   minitest
   rcov
-  ruby-debug

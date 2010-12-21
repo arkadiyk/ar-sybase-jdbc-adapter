@@ -1,8 +1,6 @@
 require 'rubygems'
 require 'bundler'
 
-
-
 begin
   Bundler.setup(:default, :development)
 rescue Bundler::BundlerError => e

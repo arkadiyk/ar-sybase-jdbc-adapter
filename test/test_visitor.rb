@@ -3,25 +3,31 @@ require 'arel/visitors/sybase_jtds'
 
 module Arel
   module Visitors
-    describe 'the oracle visitor' do
+    describe 'the sybase jtds visitor' do
       before do
         @visitor = SybaseJtds.new Table.engine
       end
 
 
-      describe 'Nodes::SelectStatement' do
-        describe 'limit' do
-          it 'adds a rownum clause' do
+      describe Nodes::SelectStatement do
+        describe 'limit with no offset and no "DISTINCT"' do
+          it 'adds a TOP keyword after "SELECT"' do
             stmt = Nodes::SelectStatement.new
-            puts stmt
-
+            stmt.cores.first.projections << 'first_field'
             stmt.limit = 10
             sql = @visitor.accept stmt
-            puts sql
-
-            sql.must_be_like %{ SELECT WHERE ROWNUM <= 10 }
+            sql.must_be_like %{ SELECT TOP 10 'first_field' }
           end
+        end
 
+        describe 'limit with no offset and "DISTINCT"' do
+          it 'adds a TOP keyword after "DISTINCT"' do
+            stmt = Nodes::SelectStatement.new
+            stmt.cores.first.projections << Nodes::SqlLiteral.new('DISTINCT id')
+            stmt.limit = 10
+            sql = @visitor.accept stmt
+            sql.must_be_like %{ SELECT DISTINCT TOP 10 id }
+          end
         end
 
 #
