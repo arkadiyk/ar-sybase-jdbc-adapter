@@ -6,7 +6,11 @@ module Arel
           limit   = o.limit
           o.limit = nil
           sql = super
-          sql.gsub!(/SELECT /, "SELECT TOP #{limit} ")
+          if sql =~ /DISTINCT /
+            sql.gsub!(/DISTINCT /, "DISTINCT TOP #{limit} ")
+          else
+            sql.gsub!(/SELECT /, "SELECT TOP #{limit} ")
+          end
         end
         sql
       end
