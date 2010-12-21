@@ -24,8 +24,8 @@ Jeweler::Tasks.new do |gem|
   gem.add_runtime_dependency 'activerecord-jdbc-adapter', '>= 1.1.0'
   # gem.add_runtime_dependency 'activerecord', '>= 3.0.3'
   gem.add_runtime_dependency 'arel', '>= 2.0.6'
+  gem.add_runtime_dependency 'jdbc-jtds'
   gem.add_development_dependency 'minitest', '>= 2.0.0'
-  # gem.add_runtime_dependency 'minitest', '>= 2.0.0'
 end
 Jeweler::RubygemsDotOrgTasks.new
 

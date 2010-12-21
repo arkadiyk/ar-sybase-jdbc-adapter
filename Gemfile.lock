@@ -16,8 +16,6 @@ GEM
     builder (2.1.2)
     git (1.2.5)
     i18n (0.5.0)
-    jdbc-jtds (1.2.5)
-    jdbc-jtds (1.2.5-java)
     jeweler (1.5.2)
       bundler (~> 1.0.0)
       git (>= 1.2.5)
@@ -37,7 +35,6 @@ DEPENDENCIES
   activerecord-jdbc-adapter (>= 1.1.0)
   arel (> 2.0.0)
   bundler (~> 1.0.0)
-  jdbc-jtds
   jeweler (~> 1.5.1)
   minitest
   rcov

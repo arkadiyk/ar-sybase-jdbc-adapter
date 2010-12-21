@@ -13,5 +13,4 @@ group :development do
   gem "arel", "> 2.0.0"
   gem "activerecord-jdbc-adapter", ">= 1.1.0"
   gem "activerecord", ">= 3.0.3"
-  gem "jdbc-jtds", :require => 'jtds-1.2.5'
 end
