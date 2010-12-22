@@ -13,6 +13,44 @@ To activate this gem the "dialect" should be set to "sybase_jtds" as follows:
       driver: net.sourceforge.jtds.jdbc.Driver
       url: jdbc:jtds:sybase://host:port/db_name
 
+== Offset in Sybase ASE
+
+Sybase is awful DB in term of support for "offset". I found 2 ways to do it for generic queries.
+
+1. Use TempTables:
+
+    select top <limit + offset> * into #tt from (<original query with NO order by>) t ORDER BY <original order> ASC
+    select top <limit> * from #tt into #tt_sorted ORDER BY <original order> DESC
+    select * from #tt_sorted ORDER BY <original order>
+
+There are 2 major drowbacks here. 1) if the offset is a large number,
+the space taken by the temptable can fill up the tempdb. 2) The original query should be parsed to strip out "ORDER BY"
+
+2. Use scrollable cursor:
+
+    declare crsr  insensitive scroll cursor for
+        select * from <original query>
+    go
+
+    declare @counter int
+    set @counter = 1
+    open crsr
+    fetch absolute <offset> from crsr
+
+    while @counter < <limit>
+    begin
+        set @counter = @counter + 1
+        fetch next from crsr
+    end
+
+    close crsr
+    deallocate crsr
+
+The problems here are 1) Scrollable cursor works for Sybase ASE starting
+version 15. 2) Cursors are not very efficient in Sybase ASE and very inefficient in Syabse IQ
+
+
+
 == Known issues
 
 Very strange issue is when the very first query uses "limit()", this driver does not work:
