@@ -17,7 +17,7 @@ To activate this gem the "dialect" should be set to "sybase_jtds" as follows:
 
 Sybase is awful DB in term of support for "offset". I found 2 ways to do it for generic queries.
 
-1. Use TempTables:
+=== 1. Use TempTables:
 
     select top <limit + offset> * into #tt from (<original query with NO order by>) t ORDER BY <original order> ASC
     select top <limit> * from #tt into #tt_sorted ORDER BY <original order> DESC
@@ -26,7 +26,7 @@ Sybase is awful DB in term of support for "offset". I found 2 ways to do it for 
 There are 2 major drowbacks here. 1) if the offset is a large number,
 the space taken by the temptable can fill up the tempdb. 2) The original query should be parsed to strip out "ORDER BY"
 
-2. Use scrollable cursor:
+=== 2. Use scrollable cursor:
 
     declare crsr  insensitive scroll cursor for
         select * from <original query>
@@ -49,7 +49,7 @@ the space taken by the temptable can fill up the tempdb. 2) The original query s
 The problems here are 1) Scrollable cursor works for Sybase ASE starting
 version 15. 2) Cursors are not very efficient in Sybase ASE and very inefficient in Syabse IQ
 
-
+I am not a Sybase expert, so *Please let me know if you are aware of more efficient ways to do limit and offset*
 
 == Known issues
 
