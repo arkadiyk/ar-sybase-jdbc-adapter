@@ -25,8 +25,8 @@ Sybase is an awful DB in term of support for "offset". I found 2 ways to do it f
     select * from #tt_sorted ORDER BY <original order>
 
 There are 2 major drawbacks here. 
- 1. If the offset is a large number, the space taken by the temptable can fill up the tempdb. 
- 2. The original query should be parsed to strip out "ORDER BY"
+1. If the offset is a large number, the space taken by the temptable can fill up the tempdb. 
+2. The original query should be parsed to strip out "ORDER BY"
 
 === 2. Use a scrollable cursor:
 
@@ -49,8 +49,8 @@ There are 2 major drawbacks here.
     deallocate crsr
 
 The problems here are: 
- 1. Scrollable cursor works for Sybase ASE starting from version 15. 
- 2. Cursors are not very efficient in Sybase ASE, and very inefficient in Sybase IQ.
+1. Scrollable cursor works for Sybase ASE starting from version 15. 
+2. Cursors are not very efficient in Sybase ASE, and very inefficient in Sybase IQ.
 
 I am not a Sybase expert, so *Please let me know if you are aware of more efficient ways to do limit and offset.*
 
