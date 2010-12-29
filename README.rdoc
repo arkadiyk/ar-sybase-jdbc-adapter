@@ -34,16 +34,8 @@ There are 2 major drawbacks here.
         select * from <original query>
     go
 
-    declare @counter int
-    set @counter = 1
-    open crsr
+    set cursor rows <limit> for crsr
     fetch absolute <offset> from crsr
-
-    while @counter < <limit>
-    begin
-        set @counter = @counter + 1
-        fetch next from crsr
-    end
 
     close crsr
     deallocate crsr
