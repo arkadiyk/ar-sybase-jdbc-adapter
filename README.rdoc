@@ -2,6 +2,11 @@
 
 ar-sybase-jdbc-adapter enhances the Arel 2 activerecord-jdbc-adapter to support "limit" and "offset" for Sybase ASE DB.
 
+**This project is a proof of concept that Sybase ASE can work nicely with Rails**
+
+Once the project reaches "close to production" functionality I will try to merge it with _activerecord-jdbc-adapter_
+
+
 To use this gem, set the "dialect" configuration parameter to "sybase_jtds".
 
 e.g.
