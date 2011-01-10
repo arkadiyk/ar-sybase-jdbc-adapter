@@ -24,14 +24,17 @@
 package arjdbc.sybase;
 
 import arjdbc.jdbc.RubyJdbcConnection;
+import arjdbc.jdbc.SQLBlock;
 import org.jruby.Ruby;
 import org.jruby.RubyClass;
 import org.jruby.RubyString;
 import org.jruby.runtime.ObjectAllocator;
+import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -65,5 +68,60 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
         if (booleanValue == false && resultSet.wasNull()) return runtime.getNil();
         return runtime.newBoolean(booleanValue);
     }
+
+
+    @Override
+    protected IRubyObject executeQuery(final ThreadContext context, final String query, final int maxRows) {
+        if(!query.matches("/OFFSET/")) {
+            return super.executeQuery(context, query, maxRows);
+        } else {
+            return executeQueryWithOffset(context, query);
+        }
+
+    }
+
+    private IRubyObject executeQueryWithOffset(final ThreadContext context, final String query) {
+        return (IRubyObject) withConnectionAndRetry(context, new SQLBlock() {
+            public Object call(Connection c) throws SQLException {
+                Matcher limitMatcher = Pattern.compile("\\sLIMIT\\s+(\\d+)", Pattern.CASE_INSENSITIVE).matcher(query);
+                String limitStr = limitMatcher.group(1);
+                String sybQuery = limitMatcher.replaceAll("");
+
+                Matcher offsetMatcher = Pattern.compile("\\sOFFSET\\s+(\\d+)", Pattern.CASE_INSENSITIVE).matcher(sybQuery);
+                String offsetStr = offsetMatcher.group(1);
+                sybQuery = offsetMatcher.replaceAll("");
+
+
+                int limit = 0, offset = 0;
+                if (offsetStr == null) {
+                    throw new RuntimeException("OFFSET is not in \"" + query + "\"");
+                } else {
+                    offset = Integer.parseInt(offsetStr);
+                }
+                if(limitStr != null) {
+                    limit = Integer.parseInt(limitStr);
+                }
+
+                Statement stmt = null;
+                try {
+                    DatabaseMetaData metadata = c.getMetaData();
+                    stmt = c.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                    ResultSet rs = stmt.executeQuery(sybQuery);
+                    rs.absolute(offset);
+//                    rs.
+
+                    return unmarshalResult(context, metadata, rs, false);
+                } catch (SQLException sqe) {
+                    if (context.getRuntime().isDebug()) {
+                        System.out.println("Error SQL: " + sybQuery);
+                    }
+                    throw sqe;
+                } finally {
+                    close(stmt);
+                }
+            }
+        });
+    }
+
 
 }
