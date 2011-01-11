@@ -38,6 +38,7 @@ There are 2 major drawbacks here.
     declare crsr  insensitive scroll cursor for
         select * from <original query>
     go
+    open crsr
 
     set cursor rows <limit> for crsr
     fetch absolute <offset> from crsr

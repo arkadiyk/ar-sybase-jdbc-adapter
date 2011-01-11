@@ -86,12 +86,12 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
      * Executes query with offset & limit in Sybase way. Requires Sybase ASE version 15 or above
      * <code>
      *     declare crsr  insensitive scroll cursor for
-     *         select * from <original query>
+     *         select * from `original query`
      *     go
      *
      *     open crsr
-     *     set cursor rows <limit> for crsr
-     *     fetch absolute <offset> from crsr
+     *     set cursor rows `limit` for crsr
+     *     fetch absolute `offset` from crsr
      *
      *     close crsr
      *     deallocate crsr
