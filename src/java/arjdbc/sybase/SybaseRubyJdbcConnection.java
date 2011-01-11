@@ -33,6 +33,8 @@ import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 
 import java.sql.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -72,7 +74,7 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
 
     @Override
     protected IRubyObject executeQuery(final ThreadContext context, final String query, final int maxRows) {
-        if(!query.matches("/OFFSET/")) {
+        if(!query.matches("\\sOFFSET\\s+(\\d+)")) {
             return super.executeQuery(context, query, maxRows);
         } else {
             return executeQueryWithOffset(context, query);
@@ -80,40 +82,45 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
 
     }
 
+    /**
+     * Executes query with offset & limit in Sybase way. Requires Sybase ASE version 15 or above
+     * <code>
+     *     declare crsr  insensitive scroll cursor for
+     *         select * from <original query>
+     *     go
+     *
+     *     open crsr
+     *     set cursor rows <limit> for crsr
+     *     fetch absolute <offset> from crsr
+     *
+     *     close crsr
+     *     deallocate crsr
+     * </code>
+     */
     private IRubyObject executeQueryWithOffset(final ThreadContext context, final String query) {
         return (IRubyObject) withConnectionAndRetry(context, new SQLBlock() {
             public Object call(Connection c) throws SQLException {
-                Matcher limitMatcher = Pattern.compile("\\sLIMIT\\s+(\\d+)", Pattern.CASE_INSENSITIVE).matcher(query);
-                String limitStr = limitMatcher.group(1);
-                String sybQuery = limitMatcher.replaceAll("");
-
-                Matcher offsetMatcher = Pattern.compile("\\sOFFSET\\s+(\\d+)", Pattern.CASE_INSENSITIVE).matcher(sybQuery);
-                String offsetStr = offsetMatcher.group(1);
-                sybQuery = offsetMatcher.replaceAll("");
-
-
-                int limit = 0, offset = 0;
-                if (offsetStr == null) {
-                    throw new RuntimeException("OFFSET is not in \"" + query + "\"");
-                } else {
-                    offset = Integer.parseInt(offsetStr);
-                }
-                if(limitStr != null) {
-                    limit = Integer.parseInt(limitStr);
-                }
+                Map<String, String> queryLimitOffset = extractLimitAndOffset(query);
 
                 Statement stmt = null;
                 try {
                     DatabaseMetaData metadata = c.getMetaData();
-                    stmt = c.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-                    ResultSet rs = stmt.executeQuery(sybQuery);
-                    rs.absolute(offset);
-//                    rs.
+                    stmt = c.createStatement();
+                    stmt.execute("declare crsr insensitive scroll cursor for " + queryLimitOffset.get("query"));
 
-                    return unmarshalResult(context, metadata, rs, false);
+                    if(queryLimitOffset.get("limit") != null) {
+                        stmt.execute("open crsr\n set cursor rows " + queryLimitOffset.get("limit") + " for crsr");
+                    } else {
+                        stmt.execute("open crsr\n set cursor rows 1000000 for crsr");  // a million records should be enough, i think
+                    }
+                    ResultSet rs = stmt.executeQuery("fetch absolute " + queryLimitOffset.get("offset") + " from crsr");
+                    IRubyObject result =  unmarshalResult(context, metadata, rs, false);
+                    stmt.execute("close crsr\n deallocate crsr");
+                    return result;
+
                 } catch (SQLException sqe) {
                     if (context.getRuntime().isDebug()) {
-                        System.out.println("Error SQL: " + sybQuery);
+                        System.out.println("Error SQL: " + queryLimitOffset.get("query"));
                     }
                     throw sqe;
                 } finally {
@@ -123,5 +130,27 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
         });
     }
 
+    /**
+     * Parses MySQL formatted query
+     * ex. if param is "SELECT * FROM table LIMIT 10 OFFSET 50",
+     * the output will be {query="SELECT * FROM table", limit="10", offset="50"}
+     *
+     * @param queryString MySQL formatted query with OFFSET and optionally LIMIT
+     * @return Map<String, String> with parsed out Limit, Offset and query string without LIMIT and OFFSET
+     */
+    private static Map<String, String> extractLimitAndOffset(String queryString){
+        Map<String,String> parsedQuery = new HashMap<String,String>();
+        Matcher limitMatcher = Pattern.compile("\\sLIMIT\\s+(\\d+)", Pattern.CASE_INSENSITIVE).matcher(queryString);
+        if(limitMatcher.find()) {
+            parsedQuery.put("limit",limitMatcher.group(1));
+            queryString = limitMatcher.replaceAll("");
+        }
 
+        Matcher offsetMatcher = Pattern.compile("\\sOFFSET\\s+(\\d+)", Pattern.CASE_INSENSITIVE).matcher(queryString);
+        if(offsetMatcher.find()) {
+            parsedQuery.put("offset",offsetMatcher.group(1));
+            parsedQuery.put("query", offsetMatcher.replaceAll(""));
+        }
+        return parsedQuery;
+    }
 }
