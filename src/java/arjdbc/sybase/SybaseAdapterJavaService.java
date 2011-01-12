@@ -33,10 +33,15 @@ import org.jruby.runtime.load.BasicLibraryService;
 
 import java.io.IOException;
 
-public class AdapterJavaService implements BasicLibraryService {
+public class SybaseAdapterJavaService implements BasicLibraryService {
     public boolean basicLoad(final Ruby runtime) throws IOException {
+        System.out.println("*****  BASIC LOAD: " + runtime);
+
         RubyClass jdbcConnection = RubyJdbcConnection.createJdbcConnectionClass(runtime);
         SybaseRubyJdbcConnection.createSybaseJdbcConnectionClass(runtime, jdbcConnection);
+
+        System.out.println("****1  BASIC LOAD: " + jdbcConnection);
+
         return true;
     }
 }

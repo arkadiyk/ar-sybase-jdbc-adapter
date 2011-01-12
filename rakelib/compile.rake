@@ -13,7 +13,7 @@ def java_classpath_arg # myriad of ways to discover JRuby classpath
   jruby_cpath ? "-cp \"#{jruby_cpath}\"" : ""
 end
 
-jar_name = File.join(*%w(lib arjdbc jdbc sybase_adapter_java.jar))
+jar_name = File.join(*%w(lib arjdbc sybase sybase_adapter_java.jar))
 
 desc "Compile the native Java code."
 task :java_compile do

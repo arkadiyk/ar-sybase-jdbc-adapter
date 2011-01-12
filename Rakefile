@@ -15,11 +15,11 @@ Jeweler::Tasks.new do |gem|
   gem.name = "ar-sybase-jdbc-adapter"
   gem.homepage = "http://github.com/arkadiyk/ar-sybase-jdbc-adapter"
   gem.license = "MIT"
-  gem.summary = %Q{Adds support for limit and offset for Sybase JDBC driver}
-  gem.description = %Q{Adds support for limit and offset for Sybase ASE DB to activerecord-jdbc-adapter for Arel 2}
+  gem.summary = %Q{Adds support for limit and offset for Sybase JDBC driver }
+  gem.description = %Q{Adds support for limit and offset for Sybase ASE DB to activerecord-jdbc-adapter for Rails 3}
   gem.email = "arkadiyk@gmail.com"
   gem.authors = ["arkadiy kraportov"]
-  gem.files = FileList['lib/**/*.rb']
+  gem.files = FileList['lib/**/*.rb', 'lib/**/*.jar']
   # Include your dependencies below. Runtime dependencies are required when using your gem,
   # and development dependencies are only needed for development (ie running rake tasks, tests, etc)
   gem.add_runtime_dependency 'activerecord-jdbc-adapter', '>= 1.1.0'

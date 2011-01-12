@@ -44,40 +44,36 @@ import java.util.regex.Pattern;
  */
 public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
 
-    private RubyString _row_num;
-
     protected SybaseRubyJdbcConnection(Ruby runtime, RubyClass metaClass) {
         super(runtime, metaClass);
-        _row_num = runtime.newString("_row_num");
+        System.out.println("== 0.1");
     }
 
     public static RubyClass createSybaseJdbcConnectionClass(Ruby runtime, RubyClass jdbcConnection) {
-        RubyClass clazz = RubyJdbcConnection.getConnectionAdapters(runtime).defineClassUnder("SyabseJdbcConnection",
+        RubyClass clazz = RubyJdbcConnection.getConnectionAdapters(runtime).defineClassUnder("SybaseJdbcConnection",
                 jdbcConnection, SYBASE_JDBCCONNECTION_ALLOCATOR);
         clazz.defineAnnotatedMethods(SybaseRubyJdbcConnection.class);
+        System.out.println("== 0.2");
 
         return clazz;
     }
 
     private static ObjectAllocator SYBASE_JDBCCONNECTION_ALLOCATOR = new ObjectAllocator() {
         public IRubyObject allocate(Ruby runtime, RubyClass klass) {
+            System.out.println("== 0.3");
             return new SybaseRubyJdbcConnection(runtime, klass);
         }
     };
 
-    protected static IRubyObject booleanToRuby(Ruby runtime, ResultSet resultSet, boolean booleanValue)
-            throws SQLException {
-        if (booleanValue == false && resultSet.wasNull()) return runtime.getNil();
-        return runtime.newBoolean(booleanValue);
-    }
-
-
     @Override
-    protected IRubyObject executeQuery(final ThreadContext context, final String query, final int maxRows) {
-        if(!query.matches("\\sOFFSET\\s+(\\d+)")) {
-            return super.executeQuery(context, query, maxRows);
+    protected boolean genericExecute(Statement stmt, String query) throws SQLException {
+        System.out.println("== 1");
+        if(!query.matches(".*\\sOFFSET\\s+(\\d+).*")) {
+            System.out.println("== 1.1");
+            return super.genericExecute(stmt, query);
         } else {
-            return executeQueryWithOffset(context, query);
+            System.out.println("== 1.2");
+            return executeQueryWithOffset(stmt, query);
         }
 
     }
@@ -97,37 +93,21 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
      *     deallocate crsr
      * </code>
      */
-    private IRubyObject executeQueryWithOffset(final ThreadContext context, final String query) {
-        return (IRubyObject) withConnectionAndRetry(context, new SQLBlock() {
-            public Object call(Connection c) throws SQLException {
-                Map<String, String> queryLimitOffset = extractLimitAndOffset(query);
+    private boolean executeQueryWithOffset(Statement stmt, String query) throws SQLException {
+        Map<String, String> queryLimitOffset = extractLimitAndOffset(query);
 
-                Statement stmt = null;
-                try {
-                    DatabaseMetaData metadata = c.getMetaData();
-                    stmt = c.createStatement();
-                    stmt.execute("declare crsr insensitive scroll cursor for " + queryLimitOffset.get("query"));
+            stmt.execute("declare crsr insensitive scroll cursor for " + queryLimitOffset.get("query"));
 
-                    if(queryLimitOffset.get("limit") != null) {
-                        stmt.execute("open crsr\n set cursor rows " + queryLimitOffset.get("limit") + " for crsr");
-                    } else {
-                        stmt.execute("open crsr\n set cursor rows 1000000 for crsr");  // a million records should be enough, i think
-                    }
-                    ResultSet rs = stmt.executeQuery("fetch absolute " + queryLimitOffset.get("offset") + " from crsr");
-                    IRubyObject result =  unmarshalResult(context, metadata, rs, false);
-                    stmt.execute("close crsr\n deallocate crsr");
-                    return result;
-
-                } catch (SQLException sqe) {
-                    if (context.getRuntime().isDebug()) {
-                        System.out.println("Error SQL: " + queryLimitOffset.get("query"));
-                    }
-                    throw sqe;
-                } finally {
-                    close(stmt);
-                }
+            if(queryLimitOffset.get("limit") != null) {
+                stmt.execute("open crsr\n set cursor rows " + queryLimitOffset.get("limit") + " for crsr");
+            } else {
+                stmt.execute("open crsr\n set cursor rows 1000000 for crsr");  // a million records should be enough, i think
             }
-        });
+            return stmt.execute("fetch absolute " + queryLimitOffset.get("offset") + " from crsr");
+
+//            stmt.execute("close crsr\n deallocate crsr");
+//            return result;
+
     }
 
     /**
