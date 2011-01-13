@@ -52,6 +52,33 @@ The problems here are:
 
 I am not a Sybase expert, so *Please let me know if you are aware of more efficient ways to do limit and offset.*
 
+== Limit and Count in Sybase ASE
+
+There is another interesting issue with Sybase DB I have just discovered. To implement "limit" I add "TOP <limit>" to the
+query and it works fine. To check how many records this query returns the obvios thing is to run something like
+
+    select count(*) from (select top 10  * from table_name) t      -- DOES NOT WORK!
+
+But it does not work! The result of this query will be total number of rows in the table. So the only solution will be to
+fall back to `cursor` and get `@@rowcount` to get the number of rows.
+
+    declare crsr  insensitive scroll cursor for
+        select * from <original query>
+    go
+    open crsr
+
+    set cursor rows <limit> for crsr
+    fetch absolute <offset> from crsr
+
+    select @@rowcount
+
+    close crsr
+    deallocate crsr
+
+
+
+
+
 == Known issues
 
 I am aware of a very strange issue where the driver does not work when the very first query uses "limit()".
