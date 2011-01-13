@@ -11,7 +11,7 @@ module Arel
 
       def visit_Arel_Nodes_SelectStatement o
         if o.offset || (o.limit && select_count?(o))
-          o.offset += 1 if o.offset
+          o.offset.expr += 1 if o.offset
           sql = super  # if offset OR (limit & count) use the Java limit/offset/count parser
         else
           limit  = o.limit
