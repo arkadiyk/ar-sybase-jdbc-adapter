@@ -46,21 +46,18 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
 
     protected SybaseRubyJdbcConnection(Ruby runtime, RubyClass metaClass) {
         super(runtime, metaClass);
-        System.out.println("== 0.1");
     }
 
     public static RubyClass createSybaseJdbcConnectionClass(Ruby runtime, RubyClass jdbcConnection) {
         RubyClass clazz = RubyJdbcConnection.getConnectionAdapters(runtime).defineClassUnder("SybaseJdbcConnection",
                 jdbcConnection, SYBASE_JDBCCONNECTION_ALLOCATOR);
         clazz.defineAnnotatedMethods(SybaseRubyJdbcConnection.class);
-        System.out.println("== 0.2");
 
         return clazz;
     }
 
     private static ObjectAllocator SYBASE_JDBCCONNECTION_ALLOCATOR = new ObjectAllocator() {
         public IRubyObject allocate(Ruby runtime, RubyClass klass) {
-            System.out.println("== 0.3");
             return new SybaseRubyJdbcConnection(runtime, klass);
         }
     };
@@ -74,10 +71,8 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
         if((offset != null) ||                     // if OFFSET
            (limit != null && count != null)) {     // if OFFSET or LIMIT with COUNT
 
-            System.out.println("== 1.0 " + queryLimitOffset);
             return executeQueryWithOffset(stmt, queryLimitOffset.get("query"), limit, offset, count);
         } else {
-            System.out.println("== 1.1 " + queryLimitOffset);
             return super.genericExecute(stmt, query);
         }
 
