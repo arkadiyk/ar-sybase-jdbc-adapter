@@ -63,14 +63,14 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
 
     @Override
     protected boolean genericExecute(Statement stmt, String query) throws SQLException {
-        Map<String, String> queryLimitOffset = extractLimitAndOffset(query);
-        String offset = queryLimitOffset.get("offset");
-        String limit = queryLimitOffset.get("limit");
-        String count = queryLimitOffset.get("count");
+        Map<String, String> parsedQuery = extractLimitOffsetAndCount(query);
+        String offset = parsedQuery.get("offset");
+        String limit = parsedQuery.get("limit");
+        String count = parsedQuery.get("count");
         if((offset != null) ||                     // if OFFSET
            (limit != null && count != null)) {     // if OFFSET or LIMIT with COUNT
 
-            return executeQueryWithOffset(stmt, queryLimitOffset.get("query"), limit, offset, count);
+            return executeQueryWithOffset(stmt, parsedQuery.get("query"), limit, offset, count);
         } else {
             return super.genericExecute(stmt, query);
         }
@@ -90,6 +90,11 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
      *
      *     close crsr
      *     deallocate crsr
+     * </code>
+     *
+     *  If there is a count adds
+     * <code>
+     *     select @@rowcount
      * </code>
      */
     private boolean executeQueryWithOffset(Statement stmt, String query, String limit, String offset, String count)
@@ -123,13 +128,13 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
 
     /**
      * Parses MySQL formatted query
-     * ex. if param is "SELECT * FROM table LIMIT 10 OFFSET 50",
-     * the output will be {query="SELECT * FROM table", limit="10", offset="50"}
+     * ex. if param is "SELECT COUNT(*) FROM table LIMIT 10 OFFSET 50",
+     * the output will be {query="SELECT * FROM table", limit="10", offset="50", count="Y"}
      *
-     * @param queryString MySQL formatted query with OFFSET and optionally LIMIT
-     * @return Map<String, String> with parsed out Limit, Offset and query string without LIMIT and OFFSET
+     * @param queryString MySQL formatted query string
+     * @return Map<String, String> with parsed out Limit, Offset, Count flag and query string without LIMIT, OFFSET or COUNT
      */
-    private static Map<String, String> extractLimitAndOffset(String queryString){
+    private static Map<String, String> extractLimitOffsetAndCount(String queryString){
         Map<String,String> parsedQuery = new HashMap<String,String>();
         Matcher countMatcher = Pattern.compile("\\sCOUNT\\s*\\(.+\\)", Pattern.CASE_INSENSITIVE).matcher(queryString);
         if(countMatcher.find()) {
