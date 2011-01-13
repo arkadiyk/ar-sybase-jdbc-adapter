@@ -1,3 +1,5 @@
+require 'arjdbc/mssql/adapter'
+
 module ::ArJdbc
   module SybaseJtds
     def arel2_visitors
@@ -7,6 +9,10 @@ module ::ArJdbc
 
     def self.jdbc_connection_class
       ::ActiveRecord::ConnectionAdapters::SybaseJdbcConnection
+    end
+
+    def self.column_selector
+      [/sybase/i, lambda {|cfg,col| col.extend(::ArJdbc::MsSQL::Column)}]
     end
   end
 end
