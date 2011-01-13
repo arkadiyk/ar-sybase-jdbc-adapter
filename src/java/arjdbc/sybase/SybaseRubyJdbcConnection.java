@@ -67,13 +67,18 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
 
     @Override
     protected boolean genericExecute(Statement stmt, String query) throws SQLException {
-        System.out.println("== 1");
-        if(!query.matches(".*\\sOFFSET\\s+(\\d+).*")) {
-            System.out.println("== 1.1");
-            return super.genericExecute(stmt, query);
+        Map<String, String> queryLimitOffset = extractLimitAndOffset(query);
+        String offset = queryLimitOffset.get("offset");
+        String limit = queryLimitOffset.get("limit");
+        String count = queryLimitOffset.get("count");
+        if((offset != null) ||                     // if OFFSET
+           (limit != null && count != null)) {     // if OFFSET or LIMIT with COUNT
+
+            System.out.println("== 1.0 " + queryLimitOffset);
+            return executeQueryWithOffset(stmt, queryLimitOffset.get("query"), limit, offset, count);
         } else {
-            System.out.println("== 1.2");
-            return executeQueryWithOffset(stmt, query);
+            System.out.println("== 1.1 " + queryLimitOffset);
+            return super.genericExecute(stmt, query);
         }
 
     }
@@ -93,17 +98,29 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
      *     deallocate crsr
      * </code>
      */
-    private boolean executeQueryWithOffset(Statement stmt, String query) throws SQLException {
-        Map<String, String> queryLimitOffset = extractLimitAndOffset(query);
+    private boolean executeQueryWithOffset(Statement stmt, String query, String limit, String offset, String count)
+            throws SQLException {
 
-            stmt.execute("declare crsr insensitive scroll cursor for " + queryLimitOffset.get("query"));
+        stmt.execute("declare crsr insensitive scroll cursor for " + query);
 
-            if(queryLimitOffset.get("limit") != null) {
-                stmt.execute("open crsr\n set cursor rows " + queryLimitOffset.get("limit") + " for crsr");
-            } else {
-                stmt.execute("open crsr\n set cursor rows 1000000 for crsr");  // a million records should be enough, i think
-            }
-            return stmt.execute("fetch absolute " + queryLimitOffset.get("offset") + " from crsr");
+        if(limit != null) {
+            stmt.execute("open crsr\n set cursor rows " + limit + " for crsr");
+        } else {
+            stmt.execute("open crsr\n set cursor rows 1000000 for crsr");  // a million records should be enough, i think
+        }
+
+        boolean result;
+        if(offset != null) {
+            result = stmt.execute("fetch absolute " + offset + " from crsr");
+        } else {
+            result = stmt.execute("fetch first from crsr");
+        }
+
+        if(count != null) {
+            result = stmt.execute("select @@rowcount");
+        }
+
+        return result;
 
 //            stmt.execute("close crsr\n deallocate crsr");
 //            return result;
@@ -120,6 +137,12 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
      */
     private static Map<String, String> extractLimitAndOffset(String queryString){
         Map<String,String> parsedQuery = new HashMap<String,String>();
+        Matcher countMatcher = Pattern.compile("\\sCOUNT\\s*\\(.+\\)", Pattern.CASE_INSENSITIVE).matcher(queryString);
+        if(countMatcher.find()) {
+            parsedQuery.put("count","Y");
+            queryString = countMatcher.replaceAll(" 'F' as f ");
+        }
+
         Matcher limitMatcher = Pattern.compile("\\sLIMIT\\s+(\\d+)", Pattern.CASE_INSENSITIVE).matcher(queryString);
         if(limitMatcher.find()) {
             parsedQuery.put("limit",limitMatcher.group(1));
@@ -129,8 +152,9 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
         Matcher offsetMatcher = Pattern.compile("\\sOFFSET\\s+(\\d+)", Pattern.CASE_INSENSITIVE).matcher(queryString);
         if(offsetMatcher.find()) {
             parsedQuery.put("offset",offsetMatcher.group(1));
-            parsedQuery.put("query", offsetMatcher.replaceAll(""));
+            queryString = offsetMatcher.replaceAll("");
         }
+        parsedQuery.put("query", queryString);
         return parsedQuery;
     }
 }

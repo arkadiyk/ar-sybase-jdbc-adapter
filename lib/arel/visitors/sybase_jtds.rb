@@ -1,9 +1,17 @@
 module Arel
   module Visitors
     class SybaseJtds < Arel::Visitors::ToSql
+
+      def select_count? o
+        sel = o.cores.length == 1 && o.cores.first
+        projections = sel.projections.length == 1 && sel.projections
+        Arel::Nodes::Count === projections.first
+      end
+
+
       def visit_Arel_Nodes_SelectStatement o
-        if o.offset
-          sql = super  # if offset use the Java limit/offset parser
+        if o.offset || (o.limit && select_count?(o))
+          sql = super  # if offset OR (limit & count) use the Java limit/offset/count parser
         else
           limit  = o.limit
           o.limit = nil
