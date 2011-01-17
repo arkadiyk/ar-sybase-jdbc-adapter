@@ -10,7 +10,7 @@ group :development do
   gem "jeweler", "~> 1.5.1"
   gem "rcov", ">= 0"
   gem "minitest"
-  gem "arel", "> 2.0.0"
-  gem "activerecord-jdbc-adapter", ">= 1.1.0"
+  gem "arel", "2.0.7"
+  gem "activerecord-jdbc-adapter", "1.1.1"
   gem "activerecord", ">= 3.0.3"
 end

@@ -23,12 +23,9 @@
 package arjdbc.sybase;
 
 import arjdbc.jdbc.RubyJdbcConnection;
-import arjdbc.jdbc.SQLBlock;
 import org.jruby.Ruby;
 import org.jruby.RubyClass;
-import org.jruby.RubyString;
 import org.jruby.runtime.ObjectAllocator;
-import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 
 import java.sql.*;
@@ -100,6 +97,13 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
     private boolean executeQueryWithOffset(Statement stmt, String query, String limit, String offset, String count)
             throws SQLException {
 
+        try {
+            stmt.execute("close crsr\ndeallocate crsr");
+        } catch (SQLException e) {
+            // could not find a better place to stick this in :(
+            // Maybe cursorOpen flag to ThreadLocal ?
+        }
+
         stmt.execute("declare crsr insensitive scroll cursor for " + query);
 
         if(limit != null) {
@@ -121,11 +125,11 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
 
         return result;
 
-//            stmt.execute("close crsr\n deallocate crsr");
-//            return result;
-
     }
 
+    private static Pattern COUNT_PATTERN = Pattern.compile("\\sCOUNT\\s*\\(.+\\)", Pattern.CASE_INSENSITIVE);
+    private static Pattern LIMIT_PATTERN = Pattern.compile("\\sLIMIT\\s+(\\d+)", Pattern.CASE_INSENSITIVE);
+    private static Pattern OFFSET_PATTERN = Pattern.compile("\\sOFFSET\\s+(\\d+)", Pattern.CASE_INSENSITIVE);
     /**
      * Parses MySQL formatted query
      * ex. if param is "SELECT COUNT(*) FROM table LIMIT 10 OFFSET 50",
@@ -136,19 +140,19 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
      */
     private static Map<String, String> extractLimitOffsetAndCount(String queryString){
         Map<String,String> parsedQuery = new HashMap<String,String>();
-        Matcher countMatcher = Pattern.compile("\\sCOUNT\\s*\\(.+\\)", Pattern.CASE_INSENSITIVE).matcher(queryString);
+        Matcher countMatcher = COUNT_PATTERN.matcher(queryString);
         if(countMatcher.find()) {
             parsedQuery.put("count","Y");
             queryString = countMatcher.replaceAll(" 'F' as f ");
         }
 
-        Matcher limitMatcher = Pattern.compile("\\sLIMIT\\s+(\\d+)", Pattern.CASE_INSENSITIVE).matcher(queryString);
+        Matcher limitMatcher = LIMIT_PATTERN.matcher(queryString);
         if(limitMatcher.find()) {
             parsedQuery.put("limit",limitMatcher.group(1));
             queryString = limitMatcher.replaceAll("");
         }
 
-        Matcher offsetMatcher = Pattern.compile("\\sOFFSET\\s+(\\d+)", Pattern.CASE_INSENSITIVE).matcher(queryString);
+        Matcher offsetMatcher = OFFSET_PATTERN.matcher(queryString);
         if(offsetMatcher.find()) {
             parsedQuery.put("offset",offsetMatcher.group(1));
             queryString = offsetMatcher.replaceAll("");

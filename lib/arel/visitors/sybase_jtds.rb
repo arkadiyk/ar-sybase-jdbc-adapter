@@ -14,7 +14,7 @@ module Arel
           o.offset.expr += 1 if o.offset
           sql = super  # if offset OR (limit & count) use the Java limit/offset/count parser
         else
-          limit  = o.limit
+          limit  = o.limit.expr
           o.limit = nil
           sql = super
 

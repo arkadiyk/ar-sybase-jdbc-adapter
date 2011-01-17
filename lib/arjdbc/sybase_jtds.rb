@@ -14,5 +14,10 @@ module ::ArJdbc
     def self.column_selector
       [/sybase/i, lambda {|cfg,col| col.extend(::ArJdbc::MsSQL::Column)}]
     end
+
+    def supports_migrations?
+      false
+    end
+
   end
 end

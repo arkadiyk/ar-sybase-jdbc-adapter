@@ -1,15 +1,20 @@
 = ar-sybase-jdbc-adapter
 
-ar-sybase-jdbc-adapter enhances the Arel 2 activerecord-jdbc-adapter to support "limit" and "offset" for Sybase ASE DB.
+ar-sybase-jdbc-adapter enhances activerecord-jdbc-adapter (Rails 3) to support "limit" and "offset" for Sybase ASE DB.
 
 **This project is a proof of concept that Sybase ASE can work nicely with Rails**
+Once the project reaches "close to production" functionality I will try to merge it with activerecord-jdbc-adapter
 
-Once the project reaches "close to production" functionality I will try to merge it with _activerecord-jdbc-adapter_
 
+== Usage
+1. Install
 
+    gem install ar-sybase-jdbc-adapter
+
+2. Configuration
 To use this gem, set the "dialect" configuration parameter to "sybase_jtds".
+Example:
 
-e.g.
     development:
       adapter: jdbc
       username: user_name
@@ -18,6 +23,7 @@ e.g.
       dialect: sybase_jtds
       driver: net.sourceforge.jtds.jdbc.Driver
       url: jdbc:jtds:sybase://host:port/db_name
+
 
 == Offset in Sybase ASE
 
@@ -77,8 +83,6 @@ fall back to `cursor` and get `@@rowcount` to get the number of rows.
 
 
 
-
-
 == Known issues
 
 I am aware of a very strange issue where the driver does not work when the very first query uses "limit()".
@@ -112,6 +116,6 @@ e.g.
 
 == Copyright
 
-Copyright (c) 2010 arkadiy kraportov. See LICENSE.txt for
+Copyright (c) 2011 arkadiy kraportov. See LICENSE.txt for
 further details.
 
