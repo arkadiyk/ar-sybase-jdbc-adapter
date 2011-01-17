@@ -128,6 +128,7 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
     }
 
     private static Pattern COUNT_PATTERN = Pattern.compile("\\sCOUNT\\s*\\(.+\\)", Pattern.CASE_INSENSITIVE);
+//    private static Pattern COUNT_AS_MATCHER = Pattern.compile("\\sCOUNT\\s*\\(.+\\)\\s+AS count_(.+),", Pattern.CASE_INSENSITIVE);
     private static Pattern LIMIT_PATTERN = Pattern.compile("\\sLIMIT\\s+(\\d+)", Pattern.CASE_INSENSITIVE);
     private static Pattern OFFSET_PATTERN = Pattern.compile("\\sOFFSET\\s+(\\d+)", Pattern.CASE_INSENSITIVE);
     /**
@@ -145,6 +146,19 @@ public class SybaseRubyJdbcConnection extends RubyJdbcConnection {
             parsedQuery.put("count","Y");
             queryString = countMatcher.replaceAll(" 'F' as f ");
         }
+
+/**
+ * Not 100% sure if we need something like "User.group(:name).limit(10).offset(10).count"
+ *   without "offset" it works fine as it is.
+ *   If we do need it, it should be matched here and implemented in <code>executeQueryWithOffset</code>
+ */
+/*
+        Matcher countAsMatcher = COUNT_AS_MATCHER.matcher(queryString);
+        if(countAsMatcher.find()) {
+            parsedQuery.put("count","Y");
+            queryString = countMatcher.replaceAll(" 'F' as f ");
+        }
+ */
 
         Matcher limitMatcher = LIMIT_PATTERN.matcher(queryString);
         if(limitMatcher.find()) {
