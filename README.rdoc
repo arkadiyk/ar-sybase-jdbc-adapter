@@ -1,9 +1,10 @@
 = ar-sybase-jdbc-adapter
 
-ar-sybase-jdbc-adapter enhances activerecord-jdbc-adapter (Rails 3) to support "limit" and "offset" for Sybase ASE DB.
+ar-sybase-jdbc-adapter enhances activerecord-jdbc-adapter (Rails 3) to support <tt>.limit</tt> and <tt>offset</tt> for Sybase ASE DB.
 
-**This project is a proof of concept that Sybase ASE can work nicely with Rails**
-Once the project reaches "close to production" functionality I will try to merge it with activerecord-jdbc-adapter
+At the moment Sybase ASE version 15 or grater is required.
+
+<em>This project is a proof of concept that Sybase ASE can work nicely with Rails</em>. Once the project reaches "close to production" functionality I will try to merge it with activerecord-jdbc-adapter
 
 
 == Usage
@@ -24,22 +25,19 @@ Example:
       driver: net.sourceforge.jtds.jdbc.Driver
       url: jdbc:jtds:sybase://host:port/db_name
 
+== Implementation notes
+If <tt>.limit</tt> with no <tt>.offset</tt> or <tt>.count</tt> methods is used, the driver simply adds "TOP" keyword to SQL and send it to the Sybase server:
+  User.limit(10)
+produces:
+  SELECT TOP 10 users.* FROM users
 
-== Offset in Sybase ASE
+The driver has to rely on Java code to implement <tt>.offset</tt> or when <tt>.count</tt> is used together with <tt>.offset</tt> or <tt>.limit</tt>. In this case Rails generate SQL like it was MySQL query:
+  User.limit(10).offset(20)
+produces
+  SELECT  users.* FROM users LIMIT 10 OFFSET 21
+This may be confusing if you are looking at the log file.
 
-Sybase is an awful DB in term of support for "offset". I found 2 ways to do it for generic queries:
-
-=== 1. Use TempTables:
-
-    select top <limit + offset> * into #tt from (<original query with NO order by>) t ORDER BY <original order> ASC
-    select top <limit> * from #tt into #tt_sorted ORDER BY <original order> DESC
-    select * from #tt_sorted ORDER BY <original order>
-
-There are 2 major drawbacks here. 
-1. If the offset is a large number, the space taken by the temptable can fill up the tempdb. 
-2. The original query should be parsed to strip out "ORDER BY"
-
-=== 2. Use a scrollable cursor:
+Java takes this query, parses it and executes multistep scrollable cursor query:
 
     declare crsr  insensitive scroll cursor for
         select * from <original query>
@@ -52,35 +50,10 @@ There are 2 major drawbacks here.
     close crsr
     deallocate crsr
 
-The problems here are: 
-1. Scrollable cursor works for Sybase ASE starting from version 15. 
-2. Cursors are not very efficient in Sybase ASE, and very inefficient in Sybase IQ.
 
-I am not a Sybase expert, so *Please let me know if you are aware of more efficient ways to do limit and offset.*
+Unfortunately this approach is not very efficient for very large OFFSET values. Also scrollable cursor works for Sybase ASE starting from version 15.
 
-== Limit and Count in Sybase ASE
-
-There is another interesting issue with Sybase DB I have just discovered. To implement "limit" I add "TOP <limit>" to the
-query and it works fine. To check how many records this query returns the obvios thing is to run something like
-
-    select count(*) from (select top 10  * from table_name) t      -- DOES NOT WORK!
-
-But it does not work! The result of this query will be total number of rows in the table. So the only solution will be to
-fall back to `cursor` and get `@@rowcount` to get the number of rows.
-
-    declare crsr  insensitive scroll cursor for
-        select * from <original query>
-    go
-    open crsr
-
-    set cursor rows <limit> for crsr
-    fetch absolute <offset> from crsr
-
-    select @@rowcount
-
-    close crsr
-    deallocate crsr
-
+I am not a Sybase expert, so <em>Please let me know if you are aware of more efficient ways to do limit and offset.</em>
 
 
 == Known issues
