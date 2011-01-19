@@ -2,15 +2,15 @@
 
 ar-sybase-jdbc-adapter enhances activerecord-jdbc-adapter (Rails 3) to support <tt>.limit</tt> and <tt>offset</tt> for Sybase ASE DB.
 
-At the moment Sybase ASE version 15 or grater is required.
+At the moment Sybase ASE version 15 or grater is required. If you need it work for ASE version 12, please open an Issue[https://github.com/arkadiyk/ar-sybase-jdbc-adapter/issues]
 
 <em>This project is a proof of concept that Sybase ASE can work nicely with Rails</em>. Once the project reaches "close to production" functionality I will try to merge it with activerecord-jdbc-adapter
 
+If you have any issues with the adapter please add an Issue[https://github.com/arkadiyk/ar-sybase-jdbc-adapter/issues]  or fork the project and send a pull request.
 
 == Usage
 1. Install
-
-    gem install ar-sybase-jdbc-adapter
+  gem install ar-sybase-jdbc-adapter
 
 2. Configuration
 To use this gem, set the "dialect" configuration parameter to "sybase_jtds".
@@ -26,18 +26,18 @@ Example:
       url: jdbc:jtds:sybase://host:port/db_name
 
 == Implementation notes
-If <tt>.limit</tt> with no <tt>.offset</tt> or <tt>.count</tt> methods is used, the driver simply adds "TOP" keyword to SQL and send it to the Sybase server:
+If <tt>.limit</tt> with no <tt>.offset</tt> or <tt>.count</tt> methods is used, the adapter simply adds "TOP" keyword to SQL and sends it to the Sybase server:
   User.limit(10)
 produces:
   SELECT TOP 10 users.* FROM users
 
-The driver has to rely on Java code to implement <tt>.offset</tt> or when <tt>.count</tt> is used together with <tt>.offset</tt> or <tt>.limit</tt>. In this case Rails generate SQL like it was MySQL query:
+The adapter has to rely on Java code to implement <tt>.offset</tt> or when <tt>.count</tt> is used together with <tt>.offset</tt> or <tt>.limit</tt>. In this case adapter will generate SQL like it was MySQL query:
   User.limit(10).offset(20)
 produces
   SELECT  users.* FROM users LIMIT 10 OFFSET 21
-This may be confusing if you are looking at the log file.
+This can be confusing if you are looking at the log file.
 
-Java takes this query, parses it and executes multistep scrollable cursor query:
+Java layer parses the SQL and executes it as multistep scrollable cursor query:
 
     declare crsr  insensitive scroll cursor for
         select * from <original query>
@@ -58,7 +58,7 @@ I am not a Sybase expert, so <em>Please let me know if you are aware of more eff
 
 == Known issues
 
-I am aware of a very strange issue where the driver does not work when the very first query uses "limit()".
+I am aware of a very strange issue where the adapter does not work when the very first query uses "limit()".
 
 e.g.
     $ rails c
@@ -66,7 +66,7 @@ e.g.
     irb(main):001:0> Client.limit(10).to_sql
     => "SELECT clients.* FROM clients LIMIT 10"
 
-Otherwise, the driver works fine by adding the "TOP" keyword to your SQL query:
+Otherwise, the adapter works fine by adding the "TOP" keyword to your SQL query:
 
 e.g.
     $ rails c
