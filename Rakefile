@@ -22,11 +22,11 @@ Jeweler::Tasks.new do |gem|
   gem.files = FileList['lib/**/*.rb', 'lib/**/*.jar']
   # Include your dependencies below. Runtime dependencies are required when using your gem,
   # and development dependencies are only needed for development (ie running rake tasks, tests, etc)
-  gem.add_runtime_dependency 'activerecord-jdbc-adapter', '>= 1.1.1'
+  gem.add_runtime_dependency 'activerecord-jdbc-adapter', '~> 1.1.1'
   # gem.add_runtime_dependency 'activerecord', '>= 3.0.3'
-  gem.add_runtime_dependency 'arel', '>= 2.0.7'
+  gem.add_runtime_dependency 'arel', '~> 2.0.7'
   gem.add_runtime_dependency 'jdbc-jtds'
-  gem.add_development_dependency 'minitest', '>= 2.0.0'
+  gem.add_development_dependency 'minitest', '~> 2.2.2'
 end
 Jeweler::RubygemsDotOrgTasks.new
 
