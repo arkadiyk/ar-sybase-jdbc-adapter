@@ -2,7 +2,7 @@ def java_classpath_arg # myriad of ways to discover JRuby classpath
   begin
     cpath  = Java::java.lang.System.getProperty('java.class.path').split(File::PATH_SEPARATOR)
     cpath += Java::java.lang.System.getProperty('sun.boot.class.path').split(File::PATH_SEPARATOR)
-    cpath << '../activerecord-jdbc-adapter/target/activerecord-jdbc-1.0.0.jar'
+    cpath << "#{ENV['JRUBY_HOME']}/lib/ruby/gems/1.8/gems/activerecord-jdbc-adapter-1.1.1/lib/arjdbc/jdbc/adapter_java.jar"
     jruby_cpath = cpath.compact.join(File::PATH_SEPARATOR)
   rescue => e
   end
