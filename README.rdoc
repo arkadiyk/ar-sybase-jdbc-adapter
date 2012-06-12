@@ -1,3 +1,11 @@
+= * No longer supported *
+Finally we moved away from Sybase DB. 
+Therefore this driver is not supported any longer.
+Please feel free to take ownership of this project
+
+
+
+
 = ar-sybase-jdbc-adapter
 
 ar-sybase-jdbc-adapter enhances activerecord-jdbc-adapter (Rails 3) to support <tt>.limit</tt> and <tt>offset</tt> for Sybase ASE DB.
